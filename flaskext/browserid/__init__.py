@@ -71,13 +71,16 @@ class BrowserID(object):
         return dict(auth_script=self.auth_script)
 
     def get_client_origin(self):
+        end_scheme = flask.request.url_root.find('://') + 3
+        client_scheme = flask.request.url_root[:end_scheme]
+        # If we're behind a proxy, we should try to use the "X-Forwarded-Proto" header.
+        if "X-Forwarded-Proto" in flask.request.headers:
+            client_scheme = flask.request.headers["X-Forwarded-Proto"] + "://"
         if self.client_domain:
             # Build the client_origin
-            end_scheme = flask.request.url_root.find('://') + 3
-            client_scheme = flask.request.url_root[:end_scheme]
             return client_scheme + self.client_domain
         else:
-            return flask.request.url_root
+            return client_scheme + flask.request.url_root[end_scheme:]
 
     def _login(self):
         payload = dict(
